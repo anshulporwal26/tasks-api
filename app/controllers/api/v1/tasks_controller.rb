@@ -3,9 +3,10 @@ module Api
 
     class TasksController < ApplicationController
       before_action :set_task, only: [:show, :update, :destroy]
+      before_action :require_same_user, only: [:update, :destroy]
       
       def index
-        @tasks = Task.all
+        @tasks = logged_in_user.tasks
         render json: @tasks
       end
 
@@ -15,6 +16,7 @@ module Api
 
       def create
         @task = Task.new(task_params)
+        @task.user = logged_in_user
         if @task.save
           render json: @task, status: :created
         else
@@ -48,6 +50,12 @@ module Api
         params.require(:task).permit(:name)
       end
 
+      def require_same_user
+        if logged_in_user != @task.user
+          render json: { errors: "You can't perform this action" }, status: :unprocessable_entity
+        end
+      end
+      
     end
 
   end
